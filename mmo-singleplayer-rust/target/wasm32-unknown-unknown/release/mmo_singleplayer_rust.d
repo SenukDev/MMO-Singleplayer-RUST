@@ -1,0 +1,1 @@
+C:\Users\senuk\Desktop\MMO-Singleplayer-RUST\mmo-singleplayer-rust\target\wasm32-unknown-unknown\release\mmo_singleplayer_rust.wasm: C:\Users\senuk\Desktop\MMO-Singleplayer-RUST\mmo-singleplayer-rust\src\lib.rs

@@ -1,0 +1,62 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>MMO Singleplayer Rust</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: #111;
+        }
+    </style>
+</head>
+<body>
+    <script type="module">
+        import init, { WorldWrapper } from "./pkg/mmo_singleplayer_rust.js";
+
+        // Timer
+        class Timer {
+            constructor(callback, timeInterval) {
+                this.callback = callback;
+                this.timeInterval = timeInterval;
+            }
+
+            start() {
+                this.expected = Date.now() + this.timeInterval;
+                this.timeout = setTimeout(this.round.bind(this), this.timeInterval);
+            }
+
+            stop() {
+                clearTimeout(this.timeout);
+            }
+
+            round() {
+                const drift = Date.now() - this.expected;
+                this.callback();
+                this.expected += this.timeInterval;
+                this.timeout = setTimeout(this.round.bind(this), this.timeInterval - drift);
+            }
+        }
+
+        // Initialize WASM and ECS loop
+        async function run() {
+            await init();
+
+            const world = new WorldWrapper();
+
+            const timer = new Timer(() => {
+                world.update();
+            }, 1000 / 30);
+
+            timer.start();
+        }
+        
+        run();
+    </script>
+</body>
+</html>
