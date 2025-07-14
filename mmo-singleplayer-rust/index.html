@@ -79,13 +79,13 @@
         const canvas = document.getElementById("my_canvas");
 
         canvas.addEventListener("click", (event) => {
-        const rect = canvas.getBoundingClientRect();
-        const x = event.clientX - rect.left;
-        const y = event.clientY - rect.top;
+            const rect = canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
 
-        if (window.world) {
-            window.world.input(x, y);
-        }
+            if (window.world) {
+                window.world.input(x, y);
+            }
         });
     </script>
 </body>

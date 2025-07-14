@@ -24,6 +24,12 @@ struct Position {
 }
 
 #[derive(Debug)]
+struct Velocity {
+    x: f32,
+    y: f32
+}
+
+#[derive(Debug)]
 struct Collision {
     radius: f32,
     offset_x: f32,
@@ -34,6 +40,11 @@ struct Collision {
 struct MouseInput {
     x: f32,
     y: f32,
+}
+
+#[derive(Debug)]
+struct MoveSpeed {
+    speed: f32
 }
 
 #[derive(Debug)]
@@ -72,7 +83,7 @@ impl WorldWrapper {
         //Set up ECS world
         let mut world = World::new();
         world.spawn((Tick { tick: 0 },));
-        world.spawn((Local, Player, Position {x: 256.0, y: 192.0}, Collision {radius: 16.0, offset_x: 0.0, offset_y: -16.0}, MoveTarget {x: 256.0, y: 192.0}));
+        world.spawn((Local, Player, Position {x: 256.0, y: 192.0}, Velocity {x: 1.0, y: 0.0}, MoveSpeed {speed: 2.0}, Collision {radius: 16.0, offset_x: 0.0, offset_y: -16.0}, MoveTarget {x: 256.0, y: 192.0}));
 
         Ok(WorldWrapper {
             world,
@@ -80,8 +91,7 @@ impl WorldWrapper {
             mouse_input: None,
         })
     }
-
-    #[wasm_bindgen]
+    
     pub fn input(&mut self, x: f32, y: f32) {
         self.mouse_input = Some(MouseInput { x, y });
         info!("Mouse clicked at: ({}, {})", x, y);
@@ -98,7 +108,29 @@ impl WorldWrapper {
             //info!("Tick: {}", tick.tick);
         }
 
+        for (_, (position, velocity, target, speed)) in self.world.query::<(&Position, &mut Velocity, &MoveTarget, &MoveSpeed)>().iter() {
+            let dx = target.x - position.x;
+            let dy = target.y - position.y;
+            let length = (dx * dx + dy * dy).sqrt();
+            let speed = speed.speed;
 
+            if length > speed {
+                velocity.x = dx / length * speed;
+                velocity.y = dy / length * speed;
+            } else if length > 0.1 {
+                velocity.x = dx;
+                velocity.y = dy;
+            } else {
+                velocity.x = 0.0;
+                velocity.y = 0.0;
+            }
+        }
+
+
+        for (_, (_, position, velocity, collision)) in self.world.query::<(&Player, &mut Position, &mut Velocity, &Collision)>().iter() {
+            position.x += velocity.x;
+            position.y += velocity.y;
+        }
 
         //Rendering
 
@@ -108,30 +140,32 @@ impl WorldWrapper {
 
         //Draw Player's Move Target
         self.context.set_fill_style(&wasm_bindgen::JsValue::from_str("#FF6666"));
-        for (_, (_, _, target)) in self.world.query::<(&Local, &Player, &MoveTarget)>().iter() {
+        for (_, (_, _, position, target)) in self.world.query::<(&Local, &Player, &Position, &MoveTarget)>().iter() {
             
-            self.context.begin_path();
-            self.context.ellipse(
-                target.x as f64,
-                target.y as f64,
-                4.0,
-                4.0,
-                0.0,
-                0.0,
-                std::f64::consts::PI * 2.0,
-            )?;
-            self.context.fill();
+            if position.x != target.x || position.y != target.y {
+                self.context.begin_path();
+                self.context.ellipse(
+                    target.x as f64,
+                    target.y as f64,
+                    4.0,
+                    4.0,
+                    0.0,
+                    0.0,
+                    std::f64::consts::PI * 2.0,
+                )?;
+                self.context.fill();
+            }
         }
 
 
         self.context.set_stroke_style(&wasm_bindgen::JsValue::from_str("#FFFFFF"));
         self.context.set_fill_style(&wasm_bindgen::JsValue::from_str("#FFFFFF"));
-        for (_, (_, pos, collision)) in self.world.query::<(&Player, &Position, &Collision)>().iter() {
+        for (_, (_, position, collision)) in self.world.query::<(&Player, &Position, &Collision)>().iter() {
             //Draw Player's Collision Outline
             self.context.begin_path();
             self.context.ellipse(
-                (pos.x + collision.offset_x) as f64,
-                (pos.y + collision.offset_y) as f64,
+                (position.x + collision.offset_x) as f64,
+                (position.y + collision.offset_y) as f64,
                 collision.radius as f64,
                 collision.radius as f64,
                 0.0,
@@ -143,8 +177,8 @@ impl WorldWrapper {
             //Draw Player's Position
             self.context.begin_path();
             self.context.ellipse(
-                pos.x as f64,
-                pos.y as f64,
+                position.x as f64,
+                position.y as f64,
                 4.0,
                 4.0,
                 0.0,
