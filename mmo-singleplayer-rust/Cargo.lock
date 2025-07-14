@@ -90,6 +90,7 @@ dependencies = [
  "hecs",
  "log",
  "wasm-bindgen",
+ "web-sys",
 ]
 
 [[package]]
