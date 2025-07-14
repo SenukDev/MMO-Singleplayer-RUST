@@ -20,6 +20,8 @@
 </head>
 <body>
     <canvas id="my_canvas" width="512" height="384"></canvas>
+
+    
     <script type="module">
         import init, { WorldWrapper } from "./pkg/mmo_singleplayer_rust.js";
 
@@ -54,6 +56,7 @@
             let world;
             try {
                 world = new WorldWrapper();
+                window.world = world;
             } catch (err) {
                 console.error("Failed to create WorldWrapper:", err);
                 return;
@@ -72,6 +75,18 @@
 
         
         run();
+
+        const canvas = document.getElementById("my_canvas");
+
+        canvas.addEventListener("click", (event) => {
+        const rect = canvas.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+
+        if (window.world) {
+            window.world.input(x, y);
+        }
+        });
     </script>
 </body>
 </html>
