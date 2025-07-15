@@ -1,0 +1,1 @@
+QueryBorrow<'_, (&components::Player, &mut components::Position, components::Velocity, &components::PlayerCollision)>

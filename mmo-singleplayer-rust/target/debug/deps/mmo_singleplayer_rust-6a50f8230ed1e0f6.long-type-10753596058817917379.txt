@@ -1,0 +1,1 @@
+(&components::Local, &components::Player, &mut components::State, &components::Position, &mut components::Velocity, &mut components::MoveTarget, &components::PlayerCollision, &components::PlayerMove)

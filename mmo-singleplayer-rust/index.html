@@ -19,11 +19,15 @@
     </style>
 </head>
 <body>
-    <canvas id="my_canvas" width="512" height="384"></canvas>
+    <canvas id="my_canvas" width="1024" height="768"></canvas>
 
     
     <script type="module">
         import init, { WorldWrapper } from "./pkg/mmo_singleplayer_rust.js";
+
+        let isMouseDown = false;
+        let mouseX = 0;
+        let mouseY = 0;
 
         // Timer
         class Timer {
@@ -64,6 +68,12 @@
 
             const timer = new Timer(() => {
                 try {
+                    if (isMouseDown) {
+                        world.input_click_hold(mouseX, mouseY);
+                    }
+                    else {
+                        world.input_click_released();
+                    }
                     world.update();
                 } catch (err) {
                     console.error("Error in world.update():", err);
@@ -78,14 +88,34 @@
 
         const canvas = document.getElementById("my_canvas");
 
-        canvas.addEventListener("click", (event) => {
+        canvas.addEventListener("mousedown", (event) => {
             const rect = canvas.getBoundingClientRect();
-            const x = event.clientX - rect.left;
-            const y = event.clientY - rect.top;
+            mouseX = event.clientX - rect.left;
+            mouseY = event.clientY - rect.top;
 
-            if (window.world) {
-                window.world.input(x, y);
+            if (window.world && isMouseDown == false) {
+                window.world.input_click_pressed(mouseX, mouseY);
             }
+
+            isMouseDown = true;
+        });
+
+        window.addEventListener("mouseup", () => {
+            isMouseDown = false;
+        });
+
+        canvas.addEventListener("mousemove", (event) => {
+            const rect = canvas.getBoundingClientRect();
+            mouseX = event.clientX - rect.left;
+            mouseY = event.clientY - rect.top;
+        });
+
+        window.addEventListener("blur", () => {
+            isMouseDown = false;
+        });
+
+        document.addEventListener("mouseleave", () => {
+            isMouseDown = false;
         });
     </script>
 </body>

@@ -36,27 +36,109 @@ impl WorldWrapper {
         world.spawn((Tick { tick: 0 },));
         world.spawn((
             Local, Player,
-            Position { x: 256.0, y: 192.0 },
-            Velocity { x: 1.0, y: 0.0 },
-            MoveSpeed { speed: 2.0 },
-            Collision { radius: 16.0, offset_x: 0.0, offset_y: -16.0 },
-            MoveTarget { x: 256.0, y: 192.0 },
+            State {state: PlayerState::Idle},
+            Position { x: 512.0, y: 384.0 },
+            Velocity { x: 0.0, y: 0.0 },
+            PlayerCollision { radius: 16.0, offset_x: 0.0, offset_y: 0.0 },
+            MoveTarget { x: 512.0, y: 384.0 },
+            PlayerMove {move_speed: 2.0, move_input_type: MovementType::Target, timer: 0, timer_threshold: 10, direction_radius: 24.0},
+        ));
+
+        world.spawn((
+            Collision {
+                collision_lines: vec![
+                    CollisionLine { x1: 384.0, y1: 256.0, x2: 640.0, y2: 256.0 },
+                    CollisionLine { x1: 640.0, y1: 256.0, x2: 640.0, y2: 512.0 },
+                ]
+            },
         ));
 
         Ok(WorldWrapper { world, context })
     }
 
-    pub fn input(&mut self, x: f32, y: f32) {
+    pub fn input_click_pressed(&mut self, x: f32, y: f32) {
         info!("Mouse clicked at: ({}, {})", x, y);
-        for (_, (_, _, target)) in self.world.query::<(&Local, &Player, &mut MoveTarget)>().iter() {
-            target.x = x;
-            target.y = y;
+        for (_, (_,
+            _,
+            state,
+            target,
+            move_type
+        )) in self.world.query::<(
+            &Local,
+            &Player,
+            &State,
+            &mut MoveTarget,
+            &mut PlayerMove
+        )>().iter() {
+            match state.state {
+                PlayerState::Idle | PlayerState::Move => {
+                    move_type.move_input_type = MovementType::Target;
+                    move_type.timer = 0;
+                    target.x = x;
+                    target.y = y;
+                }
+            }
+        }
+    }
+
+    pub fn input_click_hold(&mut self, x: f32, y: f32) {
+        info!("Mouse held at: ({}, {})", x, y);
+        for (_, (
+            _,
+            _,
+            state,
+            target,
+            move_type
+        )) in self.world.query::<(
+            &Local,
+            &Player,
+            &State,
+            &mut MoveTarget,
+            &mut PlayerMove
+        )>().iter() {
+            match state.state {
+                PlayerState::Idle | PlayerState::Move => {
+                    if move_type.timer < move_type.timer_threshold {
+                        move_type.timer += 1;
+                    }
+                    else {
+                        move_type.move_input_type = MovementType::Direction;
+                        target.x = x;
+                        target.y = y;
+                    }
+                }
+            }
+        }
+    }
+
+    pub fn input_click_released(&mut self) {
+        for (_, (
+            _,
+            _,
+            state,
+            position,
+            target,
+            move_type
+        )) in self.world.query::<(
+            &Local,
+            &Player,
+            &State,
+            &Position,
+            &mut MoveTarget,
+            &mut PlayerMove
+        )>().iter() {
+            if state.state == PlayerState::Move && move_type.move_input_type == MovementType::Direction {
+                move_type.timer = 0;
+                target.x = position.x;
+                target.y = position.y;
+            }
         }
     }
 
     pub fn update(&mut self) -> Result<(), JsValue> {
         update_tick(&mut self.world);
-        update_velocity(&mut self.world);
+        update_state(&mut self.world);
+        player_state(&mut self.world);
         apply_velocity(&mut self.world);
         render(&self.world, &self.context)
     }

@@ -2,6 +2,7 @@ mod components;
 mod systems;
 mod render;
 mod world;
+mod scripts;
 
 pub use world::WorldWrapper;
 

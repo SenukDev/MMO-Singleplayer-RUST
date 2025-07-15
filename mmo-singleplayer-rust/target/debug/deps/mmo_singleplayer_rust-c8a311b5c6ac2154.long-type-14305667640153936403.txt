@@ -1,0 +1,2 @@
+(&components::Player, &mut components::Position, components::Velocity, &components::PlayerCollision): Query
+(&components::Player, &mut components::Position, components::Velocity, &components::PlayerCollision)
