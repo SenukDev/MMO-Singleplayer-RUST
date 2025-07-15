@@ -72,18 +72,20 @@ pub fn player_state(world: &mut World) {
                 if length > player_move.move_speed {
                     velocity.x = dx / length * player_move.move_speed;
                     velocity.y = dy / length * player_move.move_speed;
-                } else if length > 0.1 {
+                } else {
                     velocity.x = dx;
                     velocity.y = dy;
-                } else {
-                    velocity.x = 0.0;
-                    velocity.y = 0.0;
                 }
                 
                 for (_, collision) in world.query::<&Collision>().iter() {
-                    let (vx, vy) = collision_slide_velocity(&position, &velocity, &player_collision, &collision, 3);
+                    let (vx, vy) = collision_slide_velocity(&position, &velocity, &player_collision, &collision, 4);
                     velocity.x = vx;
                     velocity.y = vy;
+                }
+
+                if velocity.x == 0.0 && velocity.y == 0.0 {
+                    target.x = position.x;
+                    target.y = position.y;
                 }
             }
         }

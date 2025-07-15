@@ -49,6 +49,8 @@ impl WorldWrapper {
                 collision_lines: vec![
                     CollisionLine { x1: 384.0, y1: 256.0, x2: 640.0, y2: 256.0 },
                     CollisionLine { x1: 640.0, y1: 256.0, x2: 640.0, y2: 512.0 },
+                    CollisionLine { x1: 640.0, y1: 512.0, x2: 592.0, y2: 416.0 },
+                    CollisionLine { x1: 592.0, y1: 416.0, x2: 496.0, y2: 512.0 },
                 ]
             },
         ));
